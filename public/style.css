@@ -1,0 +1,504 @@
+/* ── Base & Reset ─────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --pink-light: #fff0f5;
+  --pink-soft: #ffd6e7;
+  --pink-medium: #ffb3d1;
+  --pink-accent: #ff8fbf;
+  --pink-deep: #e87aa4;
+  --lavender: #e8d5f5;
+  --cream: #fffaf5;
+  --text-dark: #5c3d5e;
+  --text-medium: #8a6080;
+  --text-light: #b894b8;
+  --white: #ffffff;
+  --shadow-soft: 0 4px 20px rgba(255, 143, 191, 0.15);
+  --shadow-glow: 0 0 30px rgba(255, 179, 209, 0.3);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: "Quicksand", sans-serif;
+  background: linear-gradient(
+    160deg,
+    var(--pink-light) 0%,
+    var(--cream) 30%,
+    var(--lavender) 70%,
+    var(--pink-soft) 100%
+  );
+  background-attachment: fixed;
+  color: var(--text-dark);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Sparkle Particles ────────────────────────────────────── */
+.sparkles {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.sparkle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: radial-gradient(circle, var(--pink-accent), transparent);
+  border-radius: 50%;
+  animation: float-sparkle linear infinite;
+  opacity: 0;
+}
+
+.sparkle::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 8px;
+  background: linear-gradient(transparent, var(--pink-medium), transparent);
+  border-radius: 50%;
+}
+
+.sparkle::after {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 2px;
+  width: 8px;
+  background: linear-gradient(transparent, var(--pink-medium), transparent);
+  border-radius: 50%;
+}
+
+@keyframes float-sparkle {
+  0% {
+    opacity: 0;
+    transform: translateY(100vh) scale(0);
+  }
+  10% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(50vh) scale(1);
+  }
+  90% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-10vh) scale(0.5);
+  }
+}
+
+/* ── Container ────────────────────────────────────────────── */
+.container {
+  position: relative;
+  z-index: 1;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 40px 20px 60px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ── Header ───────────────────────────────────────────────── */
+header {
+  text-align: center;
+  margin-bottom: 48px;
+  padding-top: 40px;
+}
+
+.logo {
+  font-family: "Sacramento", cursive;
+  font-size: 4rem;
+  color: var(--pink-deep);
+  text-shadow: 0 2px 10px rgba(232, 122, 164, 0.3);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.tagline {
+  font-size: 0.95rem;
+  font-weight: 400;
+  color: var(--text-light);
+  letter-spacing: 2px;
+  text-transform: lowercase;
+}
+
+/* ── Search ───────────────────────────────────────────────── */
+.search-section {
+  width: 100%;
+  position: relative;
+  margin-bottom: 32px;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  background: var(--white);
+  border: 2px solid var(--pink-soft);
+  border-radius: 50px;
+  padding: 6px 6px 6px 24px;
+  box-shadow: var(--shadow-soft);
+  transition: all 0.3s ease;
+}
+
+.search-box:focus-within {
+  border-color: var(--pink-accent);
+  box-shadow: var(--shadow-glow);
+}
+
+.search-box input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-family: "Quicksand", sans-serif;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-dark);
+  background: transparent;
+}
+
+.search-box input::placeholder {
+  color: var(--text-light);
+  font-weight: 400;
+}
+
+.search-box button {
+  background: linear-gradient(135deg, var(--pink-accent), var(--pink-deep));
+  border: none;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--white);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  flex-shrink: 0;
+}
+
+.search-box button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 15px rgba(232, 122, 164, 0.4);
+}
+
+/* ── Search Results Dropdown ──────────────────────────────── */
+.search-results {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: var(--white);
+  border-radius: 20px;
+  box-shadow: 0 8px 30px rgba(92, 61, 94, 0.12);
+  overflow: hidden;
+  z-index: 10;
+  display: none;
+}
+
+.search-results.active {
+  display: block;
+}
+
+.search-result-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.search-result-item:hover {
+  background: var(--pink-light);
+}
+
+.search-result-item img {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.search-result-item .track-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.search-result-item .track-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.search-result-item .track-artist {
+  font-size: 0.82rem;
+  color: var(--text-medium);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.search-results .no-results {
+  padding: 20px;
+  text-align: center;
+  color: var(--text-light);
+  font-size: 0.9rem;
+}
+
+.search-results .loading {
+  padding: 20px;
+  text-align: center;
+  color: var(--text-light);
+  font-size: 0.9rem;
+}
+
+/* ── Selected Song ────────────────────────────────────────── */
+.selected-song {
+  width: 100%;
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.selected-label {
+  font-size: 0.85rem;
+  color: var(--text-light);
+  letter-spacing: 1.5px;
+  text-transform: lowercase;
+  margin-bottom: 14px;
+}
+
+.selected-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--white);
+  border-radius: 20px;
+  padding: 14px 24px 14px 14px;
+  box-shadow: var(--shadow-soft);
+  border: 2px solid var(--pink-soft);
+}
+
+.selected-card img {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  object-fit: cover;
+}
+
+.selected-card .track-info {
+  text-align: left;
+}
+
+.selected-card .track-name {
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--text-dark);
+}
+
+.selected-card .track-artist {
+  font-size: 0.85rem;
+  color: var(--text-medium);
+}
+
+/* ── Recommendations ──────────────────────────────────────── */
+.recommendations {
+  width: 100%;
+}
+
+.recs-title {
+  font-family: "Sacramento", cursive;
+  font-size: 2.2rem;
+  color: var(--pink-deep);
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.recs-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.rec-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--white);
+  border-radius: 18px;
+  padding: 14px 18px;
+  box-shadow: var(--shadow-soft);
+  border: 1.5px solid transparent;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  color: inherit;
+  animation: fade-in 0.4s ease both;
+}
+
+.rec-card:hover {
+  border-color: var(--pink-medium);
+  box-shadow: var(--shadow-glow);
+  transform: translateY(-2px);
+}
+
+.rec-card .rec-number {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--pink-accent);
+  min-width: 24px;
+  text-align: center;
+}
+
+.rec-card img {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.rec-card .track-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.rec-card .track-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rec-card .track-artist {
+  font-size: 0.82rem;
+  color: var(--text-medium);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rec-card .track-album {
+  font-size: 0.75rem;
+  color: var(--text-light);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+.rec-card .spotify-icon {
+  flex-shrink: 0;
+  color: var(--pink-accent);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.rec-card:hover .spotify-icon {
+  opacity: 1;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Loading Spinner ──────────────────────────────────────── */
+.loader {
+  display: flex;
+  justify-content: center;
+  padding: 40px 0;
+}
+
+.loader .dot {
+  width: 10px;
+  height: 10px;
+  background: var(--pink-accent);
+  border-radius: 50%;
+  margin: 0 5px;
+  animation: bounce 1.2s ease-in-out infinite;
+}
+
+.loader .dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.loader .dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes bounce {
+  0%, 80%, 100% {
+    transform: scale(0.6);
+    opacity: 0.4;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* ── Footer ───────────────────────────────────────────────── */
+footer {
+  margin-top: auto;
+  padding-top: 60px;
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--text-light);
+  letter-spacing: 1px;
+}
+
+/* ── Helpers ──────────────────────────────────────────────── */
+.hidden {
+  display: none !important;
+}
+
+/* ── Responsive ───────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .logo {
+    font-size: 3rem;
+  }
+  .recs-title {
+    font-size: 1.8rem;
+  }
+  .container {
+    padding: 24px 16px 40px;
+  }
+  header {
+    padding-top: 24px;
+    margin-bottom: 32px;
+  }
+}

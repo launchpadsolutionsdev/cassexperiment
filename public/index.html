@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>song cloud - find your next favorite song</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&family=Sacramento&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Floating sparkle particles -->
+  <div class="sparkles" id="sparkles"></div>
+
+  <div class="container">
+    <header>
+      <h1 class="logo">song cloud</h1>
+      <p class="tagline">find your next favorite song</p>
+    </header>
+
+    <div class="search-section">
+      <div class="search-box">
+        <input
+          type="text"
+          id="searchInput"
+          placeholder="type a song you love..."
+          autocomplete="off"
+        />
+        <button id="searchBtn" aria-label="Search">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Search results dropdown -->
+      <div class="search-results" id="searchResults"></div>
+    </div>
+
+    <!-- Selected song display -->
+    <div class="selected-song hidden" id="selectedSong">
+      <p class="selected-label">finding songs like...</p>
+      <div class="selected-card" id="selectedCard"></div>
+    </div>
+
+    <!-- Recommendations -->
+    <div class="recommendations hidden" id="recommendations">
+      <h2 class="recs-title">songs you might love</h2>
+      <div class="recs-grid" id="recsGrid"></div>
+    </div>
+
+    <footer>
+      <p>powered by spotify &middot; made with love</p>
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
