@@ -255,16 +255,30 @@ async function selectTrack(data) {
 
 // ── Blended Recommendation Engine ─────────────────────────
 // 1. Get directly similar tracks (track.getSimilar)
+//    - Fallback: if empty, use artist.getSimilar → their top tracks
 // 2. Get the seed track's mood/genre tags (track.getTopTags)
+//    - Fallback: if empty, use artist.getTopTags
 // 3. Get top tracks for the top 3 tags (tag.getTopTracks)
-// 4. Score & blend: tracks from getSimilar get high scores,
-//    tracks that also appear in tag results get boosted,
-//    tag-only tracks fill remaining spots
+// 4. Score & blend everything together
+
+const GENERIC_TAGS = new Set([
+  "seen live", "favorites", "favourite", "my favorite",
+  "love", "loved", "beautiful", "awesome", "amazing", "cool",
+  "all", "albums i own", "check out", "spotify",
+]);
+
+function filterTags(tagArray) {
+  return (tagArray || [])
+    .filter((t) => !GENERIC_TAGS.has(t.name.toLowerCase()))
+    .slice(0, 3)
+    .map((t) => t.name);
+}
+
 async function getBlendedRecommendations(seedTrack, seedArtist) {
   const apiKey = getApiKey();
   const seedKey = trackKey(seedTrack, seedArtist);
 
-  // Fire off similar tracks + top tags in parallel
+  // Step 1: Fire off track-level similar + tags in parallel
   const [similarResult, tagsResult] = await Promise.all([
     fetchJson(
       `${LASTFM_BASE}?method=track.getSimilar&track=${enc(seedTrack)}&artist=${enc(seedArtist)}&api_key=${enc(apiKey)}&format=json&limit=20&autocorrect=1`
@@ -274,25 +288,74 @@ async function getBlendedRecommendations(seedTrack, seedArtist) {
     ),
   ]);
 
-  // Parse similar tracks
-  const similarTracks = (similarResult.similartracks?.track || []).map((t) => ({
+  let similarTracks = (similarResult.similartracks?.track || []).map((t) => ({
     name: t.name,
     artist: t.artist?.name || "",
     image: pickImage(t.image),
     match: parseFloat(t.match) || 0,
   }));
 
-  // Parse tags - filter out generic ones, take top 3
-  const genericTags = new Set([
-    "seen live", "favorites", "favourite", "favorites", "my favorite",
-    "love", "loved", "beautiful", "awesome", "amazing", "cool",
-  ]);
-  const topTags = (tagsResult.toptags?.tag || [])
-    .filter((t) => !genericTags.has(t.name.toLowerCase()))
-    .slice(0, 3)
-    .map((t) => t.name);
+  let topTags = filterTags(tagsResult.toptags?.tag);
 
-  // Fetch top tracks for each tag in parallel
+  // Step 2: If track-level data is sparse, fall back to artist-level
+  const needArtistSimilar = similarTracks.length < 3;
+  const needArtistTags = topTags.length === 0;
+
+  if (needArtistSimilar || needArtistTags) {
+    const fallbackCalls = [];
+
+    if (needArtistSimilar) {
+      fallbackCalls.push(
+        fetchJson(
+          `${LASTFM_BASE}?method=artist.getSimilar&artist=${enc(seedArtist)}&api_key=${enc(apiKey)}&format=json&limit=8&autocorrect=1`
+        )
+      );
+    } else {
+      fallbackCalls.push(Promise.resolve(null));
+    }
+
+    if (needArtistTags) {
+      fallbackCalls.push(
+        fetchJson(
+          `${LASTFM_BASE}?method=artist.getTopTags&artist=${enc(seedArtist)}&api_key=${enc(apiKey)}&format=json&autocorrect=1`
+        )
+      );
+    } else {
+      fallbackCalls.push(Promise.resolve(null));
+    }
+
+    const [artistSimilarResult, artistTagsResult] = await Promise.all(fallbackCalls);
+
+    // Get top tracks from similar artists
+    if (artistSimilarResult) {
+      const simArtists = artistSimilarResult.similarartists?.artist || [];
+      const topTrackCalls = simArtists.slice(0, 5).map((a) =>
+        fetchJson(
+          `${LASTFM_BASE}?method=artist.getTopTracks&artist=${enc(a.name)}&api_key=${enc(apiKey)}&format=json&limit=4&autocorrect=1`
+        )
+      );
+      const topTrackResults = await Promise.all(topTrackCalls);
+
+      for (const result of topTrackResults) {
+        for (const t of result.toptracks?.track || []) {
+          // Add as "similar" with a moderate match score
+          similarTracks.push({
+            name: t.name,
+            artist: t.artist?.name || "",
+            image: pickImage(t.image),
+            match: 0.4,
+          });
+        }
+      }
+    }
+
+    // Use artist tags as fallback
+    if (artistTagsResult && topTags.length === 0) {
+      topTags = filterTags(artistTagsResult.toptags?.tag);
+    }
+  }
+
+  // Step 3: Fetch top tracks for each tag in parallel
   const tagTrackResults = await Promise.all(
     topTags.map((tag) =>
       fetchJson(
@@ -303,7 +366,7 @@ async function getBlendedRecommendations(seedTrack, seedArtist) {
 
   // Build a set of track keys from tag results for quick lookup
   const tagTrackKeys = new Set();
-  const tagTracksMap = new Map(); // key -> track data
+  const tagTracksMap = new Map();
   for (const result of tagTrackResults) {
     for (const t of result.tracks?.track || []) {
       const key = trackKey(t.name, t.artist?.name || "");
@@ -318,30 +381,28 @@ async function getBlendedRecommendations(seedTrack, seedArtist) {
     }
   }
 
-  // Score all tracks
-  const scored = new Map(); // key -> { track, score }
+  // Step 4: Score all tracks
+  const scored = new Map();
 
   // Similar tracks get a base score of 50-100 based on match value
   for (const t of similarTracks) {
     const key = trackKey(t.name, t.artist);
     if (key === seedKey) continue;
+    // Skip other tracks by the same seed artist if they came from artist fallback
     const baseScore = 50 + t.match * 50;
-    // Boost if also found in tag results (shared vibe!)
     const tagBoost = tagTrackKeys.has(key) ? 25 : 0;
-    scored.set(key, {
-      track: t,
-      score: baseScore + tagBoost,
-    });
+    const existing = scored.get(key);
+    const newScore = baseScore + tagBoost;
+    if (!existing || newScore > existing.score) {
+      scored.set(key, { track: t, score: newScore });
+    }
   }
 
-  // Tag-only tracks get a lower score (so they fill in if getSimilar is sparse)
+  // Tag-only tracks fill in if similar results are sparse
   for (const [key, t] of tagTracksMap) {
     if (key === seedKey) continue;
-    if (scored.has(key)) continue; // already scored from similar
-    scored.set(key, {
-      track: t,
-      score: 20, // lower priority than similar tracks
-    });
+    if (scored.has(key)) continue;
+    scored.set(key, { track: t, score: 20 });
   }
 
   // Sort by score descending, take top 10
