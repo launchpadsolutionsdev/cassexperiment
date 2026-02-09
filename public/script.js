@@ -64,16 +64,19 @@ apiKeyInput.addEventListener("keydown", (e) => {
 
 initScreen();
 
-// ── Sparkle Particles ─────────────────────────────────────
+// ── Sparkle Particles (beachy, warm, lots of them) ────────
 function createSparkles() {
-  for (let i = 0; i < 25; i++) {
+  for (let i = 0; i < 50; i++) {
     const sparkle = document.createElement("div");
     sparkle.classList.add("sparkle");
     sparkle.style.left = Math.random() * 100 + "%";
-    sparkle.style.animationDuration = 4 + Math.random() * 6 + "s";
-    sparkle.style.animationDelay = Math.random() * 8 + "s";
-    sparkle.style.width = 4 + Math.random() * 6 + "px";
-    sparkle.style.height = sparkle.style.width;
+    sparkle.style.animationDuration = 5 + Math.random() * 10 + "s";
+    sparkle.style.animationDelay = Math.random() * 12 + "s";
+    const size = 3 + Math.random() * 8;
+    sparkle.style.width = size + "px";
+    sparkle.style.height = size + "px";
+    // Vary the opacity for a hazy, dreamy beach feel
+    sparkle.style.filter = `blur(${Math.random() * 1.5}px)`;
     sparklesContainer.appendChild(sparkle);
   }
 }
