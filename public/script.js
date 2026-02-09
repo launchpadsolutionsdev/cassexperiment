@@ -208,6 +208,11 @@ function hideSearchResults() {
 }
 
 // ── Select a Track & Get Recommendations ──────────────────
+// Creates a unique key for deduplication
+function trackKey(name, artist) {
+  return (name + "|||" + artist).toLowerCase().trim();
+}
+
 async function selectTrack(data) {
   hideSearchResults();
   searchInput.value = "";
@@ -232,25 +237,8 @@ async function selectTrack(data) {
     </div>
   `;
 
-  // Fetch recommendations directly from Last.fm
   try {
-    const apiKey = getApiKey();
-    const url = `${LASTFM_BASE}?method=track.getSimilar&track=${encodeURIComponent(data.name)}&artist=${encodeURIComponent(data.artist)}&api_key=${encodeURIComponent(apiKey)}&format=json&limit=10&autocorrect=1`;
-    const res = await fetch(url);
-    const result = await res.json();
-
-    if (result.error) {
-      recsGrid.innerHTML = `<div class="no-results">${escapeHtml(result.message || "something went wrong...")}</div>`;
-      return;
-    }
-
-    const similar = result.similartracks?.track || [];
-    const tracks = similar.map((t) => ({
-      name: t.name,
-      artist: t.artist?.name || "",
-      image: pickImage(t.image),
-      spotifyUrl: `https://open.spotify.com/search/${encodeURIComponent(t.name + " " + (t.artist?.name || ""))}`,
-    }));
+    const tracks = await getBlendedRecommendations(data.name, data.artist);
 
     if (tracks.length === 0) {
       recsGrid.innerHTML =
@@ -262,6 +250,124 @@ async function selectTrack(data) {
   } catch {
     recsGrid.innerHTML =
       '<div class="no-results">couldn\'t load recommendations... try again?</div>';
+  }
+}
+
+// ── Blended Recommendation Engine ─────────────────────────
+// 1. Get directly similar tracks (track.getSimilar)
+// 2. Get the seed track's mood/genre tags (track.getTopTags)
+// 3. Get top tracks for the top 3 tags (tag.getTopTracks)
+// 4. Score & blend: tracks from getSimilar get high scores,
+//    tracks that also appear in tag results get boosted,
+//    tag-only tracks fill remaining spots
+async function getBlendedRecommendations(seedTrack, seedArtist) {
+  const apiKey = getApiKey();
+  const seedKey = trackKey(seedTrack, seedArtist);
+
+  // Fire off similar tracks + top tags in parallel
+  const [similarResult, tagsResult] = await Promise.all([
+    fetchJson(
+      `${LASTFM_BASE}?method=track.getSimilar&track=${enc(seedTrack)}&artist=${enc(seedArtist)}&api_key=${enc(apiKey)}&format=json&limit=20&autocorrect=1`
+    ),
+    fetchJson(
+      `${LASTFM_BASE}?method=track.getTopTags&track=${enc(seedTrack)}&artist=${enc(seedArtist)}&api_key=${enc(apiKey)}&format=json&autocorrect=1`
+    ),
+  ]);
+
+  // Parse similar tracks
+  const similarTracks = (similarResult.similartracks?.track || []).map((t) => ({
+    name: t.name,
+    artist: t.artist?.name || "",
+    image: pickImage(t.image),
+    match: parseFloat(t.match) || 0,
+  }));
+
+  // Parse tags - filter out generic ones, take top 3
+  const genericTags = new Set([
+    "seen live", "favorites", "favourite", "favorites", "my favorite",
+    "love", "loved", "beautiful", "awesome", "amazing", "cool",
+  ]);
+  const topTags = (tagsResult.toptags?.tag || [])
+    .filter((t) => !genericTags.has(t.name.toLowerCase()))
+    .slice(0, 3)
+    .map((t) => t.name);
+
+  // Fetch top tracks for each tag in parallel
+  const tagTrackResults = await Promise.all(
+    topTags.map((tag) =>
+      fetchJson(
+        `${LASTFM_BASE}?method=tag.getTopTracks&tag=${enc(tag)}&api_key=${enc(apiKey)}&format=json&limit=20`
+      )
+    )
+  );
+
+  // Build a set of track keys from tag results for quick lookup
+  const tagTrackKeys = new Set();
+  const tagTracksMap = new Map(); // key -> track data
+  for (const result of tagTrackResults) {
+    for (const t of result.tracks?.track || []) {
+      const key = trackKey(t.name, t.artist?.name || "");
+      tagTrackKeys.add(key);
+      if (!tagTracksMap.has(key)) {
+        tagTracksMap.set(key, {
+          name: t.name,
+          artist: t.artist?.name || "",
+          image: pickImage(t.image),
+        });
+      }
+    }
+  }
+
+  // Score all tracks
+  const scored = new Map(); // key -> { track, score }
+
+  // Similar tracks get a base score of 50-100 based on match value
+  for (const t of similarTracks) {
+    const key = trackKey(t.name, t.artist);
+    if (key === seedKey) continue;
+    const baseScore = 50 + t.match * 50;
+    // Boost if also found in tag results (shared vibe!)
+    const tagBoost = tagTrackKeys.has(key) ? 25 : 0;
+    scored.set(key, {
+      track: t,
+      score: baseScore + tagBoost,
+    });
+  }
+
+  // Tag-only tracks get a lower score (so they fill in if getSimilar is sparse)
+  for (const [key, t] of tagTracksMap) {
+    if (key === seedKey) continue;
+    if (scored.has(key)) continue; // already scored from similar
+    scored.set(key, {
+      track: t,
+      score: 20, // lower priority than similar tracks
+    });
+  }
+
+  // Sort by score descending, take top 10
+  const ranked = [...scored.values()]
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 10)
+    .map((entry) => ({
+      name: entry.track.name,
+      artist: entry.track.artist,
+      image: entry.track.image,
+      spotifyUrl: `https://open.spotify.com/search/${encodeURIComponent(entry.track.name + " " + entry.track.artist)}`,
+    }));
+
+  return ranked;
+}
+
+function enc(str) {
+  return encodeURIComponent(str);
+}
+
+async function fetchJson(url) {
+  try {
+    const res = await fetch(url);
+    return await res.json();
+  } catch {
+    return {};
   }
 }
 
