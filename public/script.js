@@ -8,6 +8,20 @@ const recommendations = document.getElementById("recommendations");
 const recsGrid = document.getElementById("recsGrid");
 const sparklesContainer = document.getElementById("sparkles");
 
+// Placeholder image for missing album art (a soft pink music note)
+const PLACEHOLDER_IMG =
+  "data:image/svg+xml," +
+  encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120">' +
+      '<rect width="120" height="120" rx="16" fill="#ffe4f0"/>' +
+      '<text x="60" y="72" text-anchor="middle" font-size="48" fill="#e87aa4">&#9835;</text>' +
+      "</svg>"
+  );
+
+function imgSrc(url) {
+  return url || PLACEHOLDER_IMG;
+}
+
 // ── Sparkle Particles ─────────────────────────────────────
 function createSparkles() {
   for (let i = 0; i < 25; i++) {
@@ -87,8 +101,8 @@ function renderSearchResults(tracks) {
   searchResults.innerHTML = tracks
     .map(
       (track) => `
-    <div class="search-result-item" data-id="${track.id}" data-name="${escapeAttr(track.name)}" data-artist="${escapeAttr(track.artist)}" data-image="${escapeAttr(track.image)}">
-      <img src="${track.image}" alt="${escapeAttr(track.name)}" />
+    <div class="search-result-item" data-name="${escapeAttr(track.name)}" data-artist="${escapeAttr(track.artist)}" data-image="${escapeAttr(track.image)}">
+      <img src="${imgSrc(track.image)}" alt="${escapeAttr(track.name)}" />
       <div class="track-info">
         <div class="track-name">${escapeHtml(track.name)}</div>
         <div class="track-artist">${escapeHtml(track.artist)}</div>
@@ -133,7 +147,7 @@ async function selectTrack(data) {
 
   // Show selected song
   selectedCard.innerHTML = `
-    <img src="${escapeAttr(data.image)}" alt="${escapeAttr(data.name)}" />
+    <img src="${imgSrc(data.image)}" alt="${escapeAttr(data.name)}" />
     <div class="track-info">
       <div class="track-name">${escapeHtml(data.name)}</div>
       <div class="track-artist">${escapeHtml(data.artist)}</div>
@@ -151,13 +165,21 @@ async function selectTrack(data) {
     </div>
   `;
 
-  // Fetch recommendations
+  // Fetch recommendations using track name + artist (Last.fm API)
   try {
-    const res = await fetch(`/api/recommendations?trackId=${data.id}`);
+    const res = await fetch(
+      `/api/recommendations?track=${encodeURIComponent(data.name)}&artist=${encodeURIComponent(data.artist)}`
+    );
     const tracks = await res.json();
 
     if (tracks.error) {
       recsGrid.innerHTML = `<div class="no-results">${escapeHtml(tracks.error)}</div>`;
+      return;
+    }
+
+    if (tracks.length === 0) {
+      recsGrid.innerHTML =
+        '<div class="no-results">no similar songs found for this track... try another!</div>';
       return;
     }
 
@@ -172,13 +194,12 @@ function renderRecommendations(tracks) {
   recsGrid.innerHTML = tracks
     .map(
       (track, i) => `
-    <a href="${track.spotifyUrl}" target="_blank" rel="noopener noreferrer" class="rec-card" style="animation-delay: ${i * 0.06}s">
+    <a href="${escapeAttr(track.spotifyUrl)}" target="_blank" rel="noopener noreferrer" class="rec-card" style="animation-delay: ${i * 0.06}s">
       <span class="rec-number">${i + 1}</span>
-      <img src="${track.image}" alt="${escapeAttr(track.name)}" />
+      <img src="${imgSrc(track.image)}" alt="${escapeAttr(track.name)}" />
       <div class="track-info">
         <div class="track-name">${escapeHtml(track.name)}</div>
         <div class="track-artist">${escapeHtml(track.artist)}</div>
-        <div class="track-album">${escapeHtml(track.album)}</div>
       </div>
       <svg class="spotify-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
@@ -199,7 +220,7 @@ function escapeHtml(str) {
 }
 
 function escapeAttr(str) {
-  return str
+  return String(str)
     .replace(/&/g, "&amp;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;")

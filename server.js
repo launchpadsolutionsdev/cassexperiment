@@ -5,46 +5,25 @@ const path = require("path");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+const LASTFM_BASE = "https://ws.audioscrobbler.com/2.0/";
+
 // Serve static files from the public folder
 app.use(express.static(path.join(__dirname, "public")));
 
-// ── Spotify Auth ──────────────────────────────────────────────
-// We use the Client Credentials flow (no user login needed).
-// The token is cached and refreshed automatically.
-let spotifyToken = null;
-let tokenExpiresAt = 0;
+function getApiKey() {
+  const key = process.env.LASTFM_API_KEY;
+  if (!key) throw new Error("Missing LASTFM_API_KEY in .env file");
+  return key;
+}
 
-async function getSpotifyToken() {
-  if (spotifyToken && Date.now() < tokenExpiresAt) return spotifyToken;
-
-  const clientId = process.env.SPOTIFY_CLIENT_ID;
-  const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
-
-  if (!clientId || !clientSecret) {
-    throw new Error(
-      "Missing SPOTIFY_CLIENT_ID or SPOTIFY_CLIENT_SECRET in .env file"
-    );
+// Helper: pick the largest available image from Last.fm's image array
+function pickImage(images) {
+  if (!images || !Array.isArray(images)) return "";
+  // Last.fm returns sizes: small, medium, large, extralarge
+  for (let i = images.length - 1; i >= 0; i--) {
+    if (images[i]["#text"]) return images[i]["#text"];
   }
-
-  const response = await fetch("https://accounts.spotify.com/api/token", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      Authorization:
-        "Basic " + Buffer.from(clientId + ":" + clientSecret).toString("base64"),
-    },
-    body: "grant_type=client_credentials",
-  });
-
-  if (!response.ok) {
-    throw new Error("Failed to get Spotify token");
-  }
-
-  const data = await response.json();
-  spotifyToken = data.access_token;
-  // Refresh 60 seconds early to be safe
-  tokenExpiresAt = Date.now() + (data.expires_in - 60) * 1000;
-  return spotifyToken;
+  return "";
 }
 
 // ── API: Search for a song ────────────────────────────────────
@@ -53,20 +32,21 @@ app.get("/api/search", async (req, res) => {
   if (!query) return res.status(400).json({ error: "Missing search query" });
 
   try {
-    const token = await getSpotifyToken();
-    const url = `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track&limit=5`;
-    const response = await fetch(url, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const apiKey = getApiKey();
+    const url = `${LASTFM_BASE}?method=track.search&track=${encodeURIComponent(query)}&api_key=${encodeURIComponent(apiKey)}&format=json&limit=5`;
+    const response = await fetch(url);
     const data = await response.json();
 
-    const tracks = (data.tracks?.items || []).map((track) => ({
-      id: track.id,
+    if (data.error) {
+      return res.status(400).json({ error: data.message || "Last.fm error" });
+    }
+
+    const matches = data.results?.trackmatches?.track || [];
+    const tracks = matches.map((track) => ({
       name: track.name,
-      artist: track.artists.map((a) => a.name).join(", "),
-      album: track.album.name,
-      image: track.album.images[0]?.url || "",
-      spotifyUrl: track.external_urls.spotify,
+      artist: track.artist,
+      image: pickImage(track.image),
+      lastfmUrl: track.url,
     }));
 
     res.json(tracks);
@@ -76,27 +56,33 @@ app.get("/api/search", async (req, res) => {
   }
 });
 
-// ── API: Get 10 recommendations based on a seed track ─────────
+// ── API: Get 10 similar songs based on a track ────────────────
 app.get("/api/recommendations", async (req, res) => {
-  const trackId = req.query.trackId;
-  if (!trackId) return res.status(400).json({ error: "Missing trackId" });
+  const track = req.query.track;
+  const artist = req.query.artist;
+  if (!track || !artist) {
+    return res.status(400).json({ error: "Missing track or artist" });
+  }
 
   try {
-    const token = await getSpotifyToken();
-    const url = `https://api.spotify.com/v1/recommendations?seed_tracks=${encodeURIComponent(trackId)}&limit=10`;
-    const response = await fetch(url, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const apiKey = getApiKey();
+    const url = `${LASTFM_BASE}?method=track.getSimilar&track=${encodeURIComponent(track)}&artist=${encodeURIComponent(artist)}&api_key=${encodeURIComponent(apiKey)}&format=json&limit=10&autocorrect=1`;
+    const response = await fetch(url);
     const data = await response.json();
 
-    const tracks = (data.tracks || []).map((track) => ({
-      id: track.id,
-      name: track.name,
-      artist: track.artists.map((a) => a.name).join(", "),
-      album: track.album.name,
-      image: track.album.images[0]?.url || "",
-      spotifyUrl: track.external_urls.spotify,
-      previewUrl: track.preview_url,
+    if (data.error) {
+      return res.status(400).json({ error: data.message || "Last.fm error" });
+    }
+
+    const similar = data.similartracks?.track || [];
+    const tracks = similar.map((t) => ({
+      name: t.name,
+      artist: t.artist?.name || "",
+      image: pickImage(t.image),
+      lastfmUrl: t.url,
+      // Build a Spotify search link so the user can find the song on Spotify
+      spotifyUrl: `https://open.spotify.com/search/${encodeURIComponent(t.name + " " + (t.artist?.name || ""))}`,
+      match: t.match,
     }));
 
     res.json(tracks);
