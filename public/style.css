@@ -133,14 +133,14 @@ header {
 }
 
 .logo {
-  font-family: "Quicksand", sans-serif;
-  font-weight: 700;
+  font-family: "Special Elite", monospace;
+  font-weight: 400;
   font-size: 3.2rem;
   color: var(--sunset-orange);
   text-shadow: 0 2px 10px rgba(244, 132, 95, 0.25);
   line-height: 1;
   margin-bottom: 6px;
-  letter-spacing: -0.5px;
+  letter-spacing: 1px;
 }
 
 .tagline {
@@ -167,11 +167,12 @@ header {
 }
 
 .setup-title {
-  font-family: "Quicksand", sans-serif;
-  font-weight: 700;
+  font-family: "Special Elite", monospace;
+  font-weight: 400;
   font-size: 1.6rem;
   color: var(--sunset-orange);
   margin-bottom: 12px;
+  letter-spacing: 0.5px;
 }
 
 .setup-text {
@@ -431,12 +432,13 @@ header {
 }
 
 .recs-title {
-  font-family: "Quicksand", sans-serif;
-  font-weight: 700;
+  font-family: "Special Elite", monospace;
+  font-weight: 400;
   font-size: 1.6rem;
   color: var(--sunset-orange);
   text-align: center;
   margin-bottom: 28px;
+  letter-spacing: 0.5px;
 }
 
 .recs-grid {
@@ -598,10 +600,10 @@ footer {
 /* ── Responsive ───────────────────────────────────────────── */
 @media (max-width: 480px) {
   .logo {
-    font-size: 2.4rem;
+    font-size: 2.6rem;
   }
   .recs-title {
-    font-size: 1.3rem;
+    font-size: 1.4rem;
   }
   .container {
     padding: 24px 16px 40px;
