@@ -22,7 +22,31 @@
       <p class="tagline">find your next favorite song</p>
     </header>
 
-    <div class="search-section">
+    <!-- API Key Setup (shown on first visit) -->
+    <div class="setup-section" id="setupSection">
+      <div class="setup-card">
+        <h2 class="setup-title">one quick thing first!</h2>
+        <p class="setup-text">
+          paste your free last.fm api key to get started.
+          <br />
+          <a href="https://www.last.fm/api/account/create" target="_blank" rel="noopener noreferrer" class="setup-link">
+            get your key here &rarr;
+          </a>
+        </p>
+        <div class="setup-input-row">
+          <input
+            type="text"
+            id="apiKeyInput"
+            placeholder="paste your api key..."
+            autocomplete="off"
+          />
+          <button id="saveKeyBtn">save</button>
+        </div>
+        <p class="setup-hint">your key is saved in your browser only - never shared</p>
+      </div>
+    </div>
+
+    <div class="search-section hidden" id="searchSection">
       <div class="search-box">
         <input
           type="text"

@@ -1,14 +1,13 @@
 {
   "name": "song-recommender",
   "version": "1.0.0",
-  "description": "A dreamy song recommendation site powered by Spotify",
+  "description": "A dreamy song recommendation site powered by Last.fm",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "dotenv": "^16.3.1"
+    "express": "^4.18.2"
   }
 }

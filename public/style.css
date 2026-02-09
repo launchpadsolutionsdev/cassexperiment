@@ -146,6 +146,98 @@ header {
   text-transform: lowercase;
 }
 
+/* ── Setup Screen ─────────────────────────────────────────── */
+.setup-section {
+  width: 100%;
+  margin-bottom: 32px;
+}
+
+.setup-card {
+  background: var(--white);
+  border-radius: 24px;
+  padding: 32px 28px;
+  box-shadow: var(--shadow-soft);
+  border: 2px solid var(--pink-soft);
+  text-align: center;
+}
+
+.setup-title {
+  font-family: "Sacramento", cursive;
+  font-size: 2rem;
+  color: var(--pink-deep);
+  margin-bottom: 12px;
+}
+
+.setup-text {
+  font-size: 0.92rem;
+  color: var(--text-medium);
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.setup-link {
+  color: var(--pink-deep);
+  font-weight: 600;
+  text-decoration: none;
+  border-bottom: 1.5px dashed var(--pink-medium);
+  transition: border-color 0.2s ease;
+}
+
+.setup-link:hover {
+  border-bottom-style: solid;
+}
+
+.setup-input-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.setup-input-row input {
+  flex: 1;
+  border: 2px solid var(--pink-soft);
+  border-radius: 14px;
+  padding: 12px 18px;
+  font-family: "Quicksand", sans-serif;
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: var(--text-dark);
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.setup-input-row input:focus {
+  border-color: var(--pink-accent);
+}
+
+.setup-input-row input::placeholder {
+  color: var(--text-light);
+}
+
+.setup-input-row button {
+  background: linear-gradient(135deg, var(--pink-accent), var(--pink-deep));
+  border: none;
+  border-radius: 14px;
+  padding: 12px 24px;
+  font-family: "Quicksand", sans-serif;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--white);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.setup-input-row button:hover {
+  transform: scale(1.03);
+  box-shadow: 0 4px 15px rgba(232, 122, 164, 0.4);
+}
+
+.setup-hint {
+  font-size: 0.75rem;
+  color: var(--text-light);
+  letter-spacing: 0.5px;
+}
+
 /* ── Search ───────────────────────────────────────────────── */
 .search-section {
   width: 100%;

@@ -2,11 +2,17 @@
 const searchInput = document.getElementById("searchInput");
 const searchBtn = document.getElementById("searchBtn");
 const searchResults = document.getElementById("searchResults");
+const searchSection = document.getElementById("searchSection");
 const selectedSong = document.getElementById("selectedSong");
 const selectedCard = document.getElementById("selectedCard");
 const recommendations = document.getElementById("recommendations");
 const recsGrid = document.getElementById("recsGrid");
 const sparklesContainer = document.getElementById("sparkles");
+const setupSection = document.getElementById("setupSection");
+const apiKeyInput = document.getElementById("apiKeyInput");
+const saveKeyBtn = document.getElementById("saveKeyBtn");
+
+const LASTFM_BASE = "https://ws.audioscrobbler.com/2.0/";
 
 // Placeholder image for missing album art (a soft pink music note)
 const PLACEHOLDER_IMG =
@@ -21,6 +27,42 @@ const PLACEHOLDER_IMG =
 function imgSrc(url) {
   return url || PLACEHOLDER_IMG;
 }
+
+// ── API Key Management ────────────────────────────────────
+function getApiKey() {
+  return localStorage.getItem("lastfm_api_key") || "";
+}
+
+function saveApiKey(key) {
+  localStorage.setItem("lastfm_api_key", key.trim());
+}
+
+// Show setup or search depending on whether we have a key
+function initScreen() {
+  if (getApiKey()) {
+    setupSection.classList.add("hidden");
+    searchSection.classList.remove("hidden");
+    searchInput.focus();
+  } else {
+    setupSection.classList.remove("hidden");
+    searchSection.classList.add("hidden");
+  }
+}
+
+saveKeyBtn.addEventListener("click", () => {
+  const key = apiKeyInput.value.trim();
+  if (!key) return;
+  saveApiKey(key);
+  initScreen();
+});
+
+apiKeyInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    saveKeyBtn.click();
+  }
+});
+
+initScreen();
 
 // ── Sparkle Particles ─────────────────────────────────────
 function createSparkles() {
@@ -73,18 +115,43 @@ document.addEventListener("click", (e) => {
   }
 });
 
+// ── Last.fm API Helpers ───────────────────────────────────
+function pickImage(images) {
+  if (!images || !Array.isArray(images)) return "";
+  for (let i = images.length - 1; i >= 0; i--) {
+    if (images[i]["#text"]) return images[i]["#text"];
+  }
+  return "";
+}
+
 // ── Search ────────────────────────────────────────────────
 async function performSearch(query) {
   showSearchLoading();
 
   try {
-    const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
-    const tracks = await res.json();
+    const apiKey = getApiKey();
+    const url = `${LASTFM_BASE}?method=track.search&track=${encodeURIComponent(query)}&api_key=${encodeURIComponent(apiKey)}&format=json&limit=5`;
+    const res = await fetch(url);
+    const data = await res.json();
 
-    if (tracks.error) {
-      showSearchError(tracks.error);
+    if (data.error) {
+      if (data.error === 10) {
+        // Invalid API key - reset and show setup
+        localStorage.removeItem("lastfm_api_key");
+        initScreen();
+        hideSearchResults();
+        return;
+      }
+      showSearchError(data.message || "something went wrong...");
       return;
     }
+
+    const matches = data.results?.trackmatches?.track || [];
+    const tracks = matches.map((track) => ({
+      name: track.name,
+      artist: track.artist,
+      image: pickImage(track.image),
+    }));
 
     if (tracks.length === 0) {
       showNoResults();
@@ -165,17 +232,25 @@ async function selectTrack(data) {
     </div>
   `;
 
-  // Fetch recommendations using track name + artist (Last.fm API)
+  // Fetch recommendations directly from Last.fm
   try {
-    const res = await fetch(
-      `/api/recommendations?track=${encodeURIComponent(data.name)}&artist=${encodeURIComponent(data.artist)}`
-    );
-    const tracks = await res.json();
+    const apiKey = getApiKey();
+    const url = `${LASTFM_BASE}?method=track.getSimilar&track=${encodeURIComponent(data.name)}&artist=${encodeURIComponent(data.artist)}&api_key=${encodeURIComponent(apiKey)}&format=json&limit=10&autocorrect=1`;
+    const res = await fetch(url);
+    const result = await res.json();
 
-    if (tracks.error) {
-      recsGrid.innerHTML = `<div class="no-results">${escapeHtml(tracks.error)}</div>`;
+    if (result.error) {
+      recsGrid.innerHTML = `<div class="no-results">${escapeHtml(result.message || "something went wrong...")}</div>`;
       return;
     }
+
+    const similar = result.similartracks?.track || [];
+    const tracks = similar.map((t) => ({
+      name: t.name,
+      artist: t.artist?.name || "",
+      image: pickImage(t.image),
+      spotifyUrl: `https://open.spotify.com/search/${encodeURIComponent(t.name + " " + (t.artist?.name || ""))}`,
+    }));
 
     if (tracks.length === 0) {
       recsGrid.innerHTML =
