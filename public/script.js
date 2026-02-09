@@ -14,13 +14,13 @@ const saveKeyBtn = document.getElementById("saveKeyBtn");
 
 const LASTFM_BASE = "https://ws.audioscrobbler.com/2.0/";
 
-// Placeholder image for missing album art (a soft pink music note)
+// Placeholder image for missing album art (warm sunset music note)
 const PLACEHOLDER_IMG =
   "data:image/svg+xml," +
   encodeURIComponent(
     '<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120">' +
-      '<rect width="120" height="120" rx="16" fill="#ffe4f0"/>' +
-      '<text x="60" y="72" text-anchor="middle" font-size="48" fill="#e87aa4">&#9835;</text>' +
+      '<rect width="120" height="120" rx="16" fill="#fff5ee"/>' +
+      '<text x="60" y="72" text-anchor="middle" font-size="48" fill="#f4845f">&#9835;</text>' +
       "</svg>"
   );
 
@@ -247,6 +247,9 @@ async function selectTrack(data) {
     }
 
     renderRecommendations(tracks);
+
+    // Fetch mood tags for each track in the background (non-blocking)
+    fetchAndDisplayTags(tracks);
   } catch {
     recsGrid.innerHTML =
       '<div class="no-results">couldn\'t load recommendations... try again?</div>';
@@ -436,12 +439,13 @@ function renderRecommendations(tracks) {
   recsGrid.innerHTML = tracks
     .map(
       (track, i) => `
-    <a href="${escapeAttr(track.spotifyUrl)}" target="_blank" rel="noopener noreferrer" class="rec-card" style="animation-delay: ${i * 0.06}s">
+    <a href="${escapeAttr(track.spotifyUrl)}" target="_blank" rel="noopener noreferrer" class="rec-card" style="animation-delay: ${i * 0.06}s" data-track-name="${escapeAttr(track.name)}" data-track-artist="${escapeAttr(track.artist)}">
       <span class="rec-number">${i + 1}</span>
       <img src="${imgSrc(track.image)}" alt="${escapeAttr(track.name)}" />
       <div class="track-info">
         <div class="track-name">${escapeHtml(track.name)}</div>
         <div class="track-artist">${escapeHtml(track.artist)}</div>
+        <div class="track-tags" id="tags-${i}"></div>
       </div>
       <svg class="spotify-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
@@ -452,6 +456,42 @@ function renderRecommendations(tracks) {
   `
     )
     .join("");
+}
+
+// ── Mood Tags ─────────────────────────────────────────────
+// Fetches top tags for each recommended track and displays them as pills.
+// Falls back to artist tags if track tags are empty.
+async function fetchAndDisplayTags(tracks) {
+  const apiKey = getApiKey();
+
+  // Fire all tag requests in parallel
+  const tagPromises = tracks.map(async (track, i) => {
+    // Try track-level tags first
+    const trackTagResult = await fetchJson(
+      `${LASTFM_BASE}?method=track.getTopTags&track=${enc(track.name)}&artist=${enc(track.artist)}&api_key=${enc(apiKey)}&format=json&autocorrect=1`
+    );
+
+    let tags = filterTags(trackTagResult.toptags?.tag);
+
+    // Fall back to artist tags if track has none
+    if (tags.length === 0) {
+      const artistTagResult = await fetchJson(
+        `${LASTFM_BASE}?method=artist.getTopTags&artist=${enc(track.artist)}&api_key=${enc(apiKey)}&format=json&autocorrect=1`
+      );
+      tags = filterTags(artistTagResult.toptags?.tag);
+    }
+
+    // Render the tag pills into the card
+    const tagContainer = document.getElementById(`tags-${i}`);
+    if (tagContainer && tags.length > 0) {
+      tagContainer.innerHTML = tags
+        .map((tag) => `<span class="tag-pill">${escapeHtml(tag)}</span>`)
+        .join("");
+    }
+  });
+
+  // Let them all finish (errors are swallowed per-track)
+  await Promise.allSettled(tagPromises);
 }
 
 // ── Helpers ───────────────────────────────────────────────

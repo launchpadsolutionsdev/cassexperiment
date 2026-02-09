@@ -8,19 +8,21 @@
 }
 
 :root {
-  --pink-light: #fff0f5;
-  --pink-soft: #ffd6e7;
-  --pink-medium: #ffb3d1;
-  --pink-accent: #ff8fbf;
-  --pink-deep: #e87aa4;
-  --lavender: #e8d5f5;
-  --cream: #fffaf5;
-  --text-dark: #5c3d5e;
-  --text-medium: #8a6080;
-  --text-light: #b894b8;
+  --peach-light: #fff5ee;
+  --peach-soft: #ffe0cc;
+  --coral-light: #ffcdb2;
+  --coral: #ffb4a2;
+  --coral-deep: #e5989b;
+  --sunset-orange: #f4845f;
+  --sunset-warm: #f9a66c;
+  --golden: #f2cc8f;
+  --cream: #fffaf3;
+  --text-dark: #5c3d2e;
+  --text-medium: #8a6a5a;
+  --text-light: #b89a8a;
   --white: #ffffff;
-  --shadow-soft: 0 4px 20px rgba(255, 143, 191, 0.15);
-  --shadow-glow: 0 0 30px rgba(255, 179, 209, 0.3);
+  --shadow-soft: 0 4px 20px rgba(244, 132, 95, 0.12);
+  --shadow-glow: 0 0 30px rgba(255, 180, 162, 0.25);
 }
 
 html {
@@ -31,10 +33,11 @@ body {
   font-family: "Quicksand", sans-serif;
   background: linear-gradient(
     160deg,
-    var(--pink-light) 0%,
-    var(--cream) 30%,
-    var(--lavender) 70%,
-    var(--pink-soft) 100%
+    var(--peach-light) 0%,
+    var(--cream) 25%,
+    var(--coral-light) 55%,
+    var(--peach-soft) 80%,
+    var(--golden) 100%
   );
   background-attachment: fixed;
   color: var(--text-dark);
@@ -58,7 +61,7 @@ body {
   position: absolute;
   width: 6px;
   height: 6px;
-  background: radial-gradient(circle, var(--pink-accent), transparent);
+  background: radial-gradient(circle, var(--sunset-warm), transparent);
   border-radius: 50%;
   animation: float-sparkle linear infinite;
   opacity: 0;
@@ -72,7 +75,7 @@ body {
   transform: translateX(-50%);
   width: 2px;
   height: 8px;
-  background: linear-gradient(transparent, var(--pink-medium), transparent);
+  background: linear-gradient(transparent, var(--golden), transparent);
   border-radius: 50%;
 }
 
@@ -84,7 +87,7 @@ body {
   transform: translateY(-50%);
   height: 2px;
   width: 8px;
-  background: linear-gradient(transparent, var(--pink-medium), transparent);
+  background: linear-gradient(transparent, var(--golden), transparent);
   border-radius: 50%;
 }
 
@@ -130,12 +133,14 @@ header {
 }
 
 .logo {
-  font-family: "Sacramento", cursive;
-  font-size: 4rem;
-  color: var(--pink-deep);
-  text-shadow: 0 2px 10px rgba(232, 122, 164, 0.3);
+  font-family: "Quicksand", sans-serif;
+  font-weight: 700;
+  font-size: 3.2rem;
+  color: var(--sunset-orange);
+  text-shadow: 0 2px 10px rgba(244, 132, 95, 0.25);
   line-height: 1;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  letter-spacing: -0.5px;
 }
 
 .tagline {
@@ -157,14 +162,15 @@ header {
   border-radius: 24px;
   padding: 32px 28px;
   box-shadow: var(--shadow-soft);
-  border: 2px solid var(--pink-soft);
+  border: 2px solid var(--peach-soft);
   text-align: center;
 }
 
 .setup-title {
-  font-family: "Sacramento", cursive;
-  font-size: 2rem;
-  color: var(--pink-deep);
+  font-family: "Quicksand", sans-serif;
+  font-weight: 700;
+  font-size: 1.6rem;
+  color: var(--sunset-orange);
   margin-bottom: 12px;
 }
 
@@ -176,10 +182,10 @@ header {
 }
 
 .setup-link {
-  color: var(--pink-deep);
+  color: var(--sunset-orange);
   font-weight: 600;
   text-decoration: none;
-  border-bottom: 1.5px dashed var(--pink-medium);
+  border-bottom: 1.5px dashed var(--coral);
   transition: border-color 0.2s ease;
 }
 
@@ -195,7 +201,7 @@ header {
 
 .setup-input-row input {
   flex: 1;
-  border: 2px solid var(--pink-soft);
+  border: 2px solid var(--peach-soft);
   border-radius: 14px;
   padding: 12px 18px;
   font-family: "Quicksand", sans-serif;
@@ -207,7 +213,7 @@ header {
 }
 
 .setup-input-row input:focus {
-  border-color: var(--pink-accent);
+  border-color: var(--sunset-orange);
 }
 
 .setup-input-row input::placeholder {
@@ -215,7 +221,7 @@ header {
 }
 
 .setup-input-row button {
-  background: linear-gradient(135deg, var(--pink-accent), var(--pink-deep));
+  background: linear-gradient(135deg, var(--sunset-warm), var(--sunset-orange));
   border: none;
   border-radius: 14px;
   padding: 12px 24px;
@@ -229,7 +235,7 @@ header {
 
 .setup-input-row button:hover {
   transform: scale(1.03);
-  box-shadow: 0 4px 15px rgba(232, 122, 164, 0.4);
+  box-shadow: 0 4px 15px rgba(244, 132, 95, 0.35);
 }
 
 .setup-hint {
@@ -249,7 +255,7 @@ header {
   display: flex;
   align-items: center;
   background: var(--white);
-  border: 2px solid var(--pink-soft);
+  border: 2px solid var(--peach-soft);
   border-radius: 50px;
   padding: 6px 6px 6px 24px;
   box-shadow: var(--shadow-soft);
@@ -257,7 +263,7 @@ header {
 }
 
 .search-box:focus-within {
-  border-color: var(--pink-accent);
+  border-color: var(--sunset-orange);
   box-shadow: var(--shadow-glow);
 }
 
@@ -278,7 +284,7 @@ header {
 }
 
 .search-box button {
-  background: linear-gradient(135deg, var(--pink-accent), var(--pink-deep));
+  background: linear-gradient(135deg, var(--sunset-warm), var(--sunset-orange));
   border: none;
   border-radius: 50%;
   width: 44px;
@@ -294,7 +300,7 @@ header {
 
 .search-box button:hover {
   transform: scale(1.05);
-  box-shadow: 0 4px 15px rgba(232, 122, 164, 0.4);
+  box-shadow: 0 4px 15px rgba(244, 132, 95, 0.35);
 }
 
 /* ── Search Results Dropdown ──────────────────────────────── */
@@ -305,7 +311,7 @@ header {
   right: 0;
   background: var(--white);
   border-radius: 20px;
-  box-shadow: 0 8px 30px rgba(92, 61, 94, 0.12);
+  box-shadow: 0 8px 30px rgba(92, 61, 46, 0.12);
   overflow: hidden;
   z-index: 10;
   display: none;
@@ -325,7 +331,7 @@ header {
 }
 
 .search-result-item:hover {
-  background: var(--pink-light);
+  background: var(--peach-light);
 }
 
 .search-result-item img {
@@ -394,7 +400,7 @@ header {
   border-radius: 20px;
   padding: 14px 24px 14px 14px;
   box-shadow: var(--shadow-soft);
-  border: 2px solid var(--pink-soft);
+  border: 2px solid var(--peach-soft);
 }
 
 .selected-card img {
@@ -425,9 +431,10 @@ header {
 }
 
 .recs-title {
-  font-family: "Sacramento", cursive;
-  font-size: 2.2rem;
-  color: var(--pink-deep);
+  font-family: "Quicksand", sans-serif;
+  font-weight: 700;
+  font-size: 1.6rem;
+  color: var(--sunset-orange);
   text-align: center;
   margin-bottom: 28px;
 }
@@ -454,7 +461,7 @@ header {
 }
 
 .rec-card:hover {
-  border-color: var(--pink-medium);
+  border-color: var(--coral);
   box-shadow: var(--shadow-glow);
   transform: translateY(-2px);
 }
@@ -462,14 +469,14 @@ header {
 .rec-card .rec-number {
   font-weight: 700;
   font-size: 1rem;
-  color: var(--pink-accent);
+  color: var(--sunset-orange);
   min-width: 24px;
   text-align: center;
 }
 
 .rec-card img {
-  width: 52px;
-  height: 52px;
+  width: 56px;
+  height: 56px;
   border-radius: 12px;
   object-fit: cover;
   flex-shrink: 0;
@@ -497,18 +504,28 @@ header {
   text-overflow: ellipsis;
 }
 
-.rec-card .track-album {
-  font-size: 0.75rem;
-  color: var(--text-light);
+.rec-card .track-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 5px;
+}
+
+.rec-card .tag-pill {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--sunset-orange);
+  background: var(--peach-light);
+  border: 1px solid var(--peach-soft);
+  border-radius: 20px;
+  padding: 2px 9px;
+  letter-spacing: 0.3px;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin-top: 2px;
 }
 
 .rec-card .spotify-icon {
   flex-shrink: 0;
-  color: var(--pink-accent);
+  color: var(--sunset-orange);
   opacity: 0;
   transition: opacity 0.2s ease;
 }
@@ -538,7 +555,7 @@ header {
 .loader .dot {
   width: 10px;
   height: 10px;
-  background: var(--pink-accent);
+  background: var(--sunset-orange);
   border-radius: 50%;
   margin: 0 5px;
   animation: bounce 1.2s ease-in-out infinite;
@@ -581,10 +598,10 @@ footer {
 /* ── Responsive ───────────────────────────────────────────── */
 @media (max-width: 480px) {
   .logo {
-    font-size: 3rem;
+    font-size: 2.4rem;
   }
   .recs-title {
-    font-size: 1.8rem;
+    font-size: 1.3rem;
   }
   .container {
     padding: 24px 16px 40px;
